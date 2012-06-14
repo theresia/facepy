@@ -5,6 +5,7 @@ import json
 from mock import patch, call, Mock as mock
 from nose.tools import *
 
+from facepy import exceptions
 from facepy import GraphAPI
 
 TEST_USER_ACCESS_TOKEN = '...'
@@ -91,7 +92,7 @@ def test_get():
 
     try:
         graph.get('me')
-    except GraphAPI.FacebookError as e:
+    except exceptions.FacebookError as e:
         assert e.code == 1
     else:
         assert False, "Error shoud have been raised."
@@ -110,7 +111,7 @@ def test_get():
 
     try:
         graph.get('me')
-    except GraphAPI.FacebookError as e:
+    except exceptions.FacebookError as e:
         assert e.message == 'The action you\'re trying to publish is invalid'
         assert e.code == None
     else:
@@ -136,7 +137,7 @@ def test_get_with_retries():
 
     try:
         graph.get('me', retry=3)
-    except GraphAPI.FacebookError:
+    except exceptions.FacebookError:
         pass
 
     assert mock_request.call_args_list == [

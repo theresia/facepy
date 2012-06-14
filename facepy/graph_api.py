@@ -1,11 +1,12 @@
 import requests
 
-from .exceptions import FacepyError
+from .exceptions import FacebookError, OAuthError
 
 try:
     import simplejson as json
 except ImportError:
     import json
+
 
 class GraphAPI(object):
 
@@ -41,7 +42,7 @@ class GraphAPI(object):
                 raise response
 
         if response is False:
-            raise self.FacebookError('Could not get "%s".' % path)
+            raise FacebookError('Could not get "%s".' % path)
 
         return response
 
@@ -59,7 +60,7 @@ class GraphAPI(object):
         response = self._query('POST', path, data)
 
         if response is False:
-            raise self.FacebookError('Could not post to "%s"' % path)
+            raise FacebookError('Could not post to "%s"' % path)
 
         return response
 
@@ -73,7 +74,7 @@ class GraphAPI(object):
         response = self._query('DELETE', path)
 
         if response is False:
-            raise self.FacebookError('Could not delete "%s"' % path)
+            raise FacebookError('Could not delete "%s"' % path)
 
         return response
 
@@ -112,7 +113,7 @@ class GraphAPI(object):
 
         :param requests: A list of dictionaries with keys 'method', 'relative_url' and optionally 'body'.
 
-        Yields a list of responses and/or GraphAPI.FacebookError, GraphAPI.HTTPError instances.
+        Yields a list of responses and/or FacebookError, GraphAPI.HTTPError instances.
         """
         responses = self.post(
             batch = json.dumps(requests)
@@ -253,9 +254,9 @@ class GraphAPI(object):
                 error = data['error']
 
                 if error.get('type') == "OAuthException":
-                    exception = self.OAuthError
+                    exception = OAuthError
                 else:
-                    exception = self.FacebookError
+                    exception = FacebookError
 
                 return exception(
                     error.get('message'),
@@ -264,23 +265,9 @@ class GraphAPI(object):
 
             # Facebook occasionally reports errors in its legacy error format.
             if 'error_msg' in data:
-                return self.FacebookError(
+                return FacebookError(
                     data.get('error_msg'),
                     data.get('error_code', None)
                 )
 
         return data
-
-    class FacebookError(FacepyError):
-        """Exception for errors returned by the Graph API."""
-
-        def __init__(self, message, code):
-            super(GraphAPI.FacebookError, self).__init__(message)
-
-            self.code = code
-
-    class OAuthError(FacebookError):
-        """Exception for errors specifically related to OAuth."""
-
-    class HTTPError(FacepyError):
-        """Exception for transport errors."""
